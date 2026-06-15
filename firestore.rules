@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper to check if a string is a valid ID
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Helper for checking if signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper for checking if the user is the administrator
+    function isAdmin() {
+      return isSignedIn() && 
+             request.auth.token.email == "aaradhyaayurwellness@gmail.com" && 
+             request.auth.token.email_verified == true;
+    }
+
+    // Schema/Type Validation for Inquiry Entity
+    function isValidInquiry(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 200 &&
+             data.phone is string && data.phone.size() <= 50 &&
+             (!data.keys().hasAny(['email']) || (data.email is string && data.email.size() <= 150)) &&
+             (!data.keys().hasAny(['city']) || (data.city is string && data.city.size() <= 150)) &&
+             data.goal is string && data.goal.size() <= 150 &&
+             data.message is string && data.message.size() <= 2000 &&
+             data.source is string && data.source.size() <= 50 &&
+             data.syncedToSheets is bool &&
+             data.createdAt is timestamp;
+    }
+
+    match /inquiries/{inquiryId} {
+      allow get, list, delete: if isAdmin();
+      
+      allow create: if isValidId(inquiryId) && 
+                       isValidInquiry(request.resource.data) &&
+                       request.resource.data.id == inquiryId &&
+                       request.resource.data.syncedToSheets == false &&
+                       request.resource.data.createdAt == request.time &&
+                       request.resource.data.keys().hasAll(['id', 'name', 'phone', 'goal', 'message', 'source', 'syncedToSheets', 'createdAt']) &&
+                       (request.resource.data.keys().size() >= 8 && request.resource.data.keys().size() <= 10);
+                       
+      allow update: if isAdmin() && 
+                       isValidInquiry(request.resource.data) &&
+                       request.resource.data.id == resource.data.id &&
+                       request.resource.data.createdAt == resource.data.createdAt &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['syncedToSheets']);
+    }
+
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "inquiry": {
+      "title": "Inquiry",
+      "description": "Customer inquiry details submitted via contact form or booking modal",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique inquiry ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Visitor's full name"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Visitor's WhatsApp/Phone number"
+        },
+        "email": {
+          "type": "string",
+          "description": "Visitor's email address (optional)"
+        },
+        "city": {
+          "type": "string",
+          "description": "Visitor's city and state (optional)"
+        },
+        "goal": {
+          "type": "string",
+          "description": "Focus wellness discipline or wellness challenge focus"
+        },
+        "message": {
+          "type": "string",
+          "description": "Brief description of habits or wellness challenges"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source form (contact or booking)"
+        },
+        "syncedToSheets": {
+          "type": "boolean",
+          "description": "True if synced to Google Sheet"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Inquiry submission timestamp"
+        }
+      },
+      "required": ["id", "name", "phone", "goal", "message", "source", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/inquiries/{inquiryId}": {
+      "schema": "inquiry",
+      "description": "Collection of visitor inquiries"
+    }
+  }
+}
